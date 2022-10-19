@@ -1,0 +1,241 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`test LambdaToPolly construct 1`] = `
+Object {
+  "Parameters": Object {
+    "AssetParameters1a21ea43914ea1da86c2df4fc8d05aaece63825a01a07c2977ece5a5db037391ArtifactHash16DD15D4": Object {
+      "Description": "Artifact hash for asset \\"1a21ea43914ea1da86c2df4fc8d05aaece63825a01a07c2977ece5a5db037391\\"",
+      "Type": "String",
+    },
+    "AssetParameters1a21ea43914ea1da86c2df4fc8d05aaece63825a01a07c2977ece5a5db037391S3BucketCF831E25": Object {
+      "Description": "S3 bucket for asset \\"1a21ea43914ea1da86c2df4fc8d05aaece63825a01a07c2977ece5a5db037391\\"",
+      "Type": "String",
+    },
+    "AssetParameters1a21ea43914ea1da86c2df4fc8d05aaece63825a01a07c2977ece5a5db037391S3VersionKey235DFDBA": Object {
+      "Description": "S3 key for asset version \\"1a21ea43914ea1da86c2df4fc8d05aaece63825a01a07c2977ece5a5db037391\\"",
+      "Type": "String",
+    },
+  },
+  "Resources": Object {
+    "PollyLambdaToPollyLambdaFunction167F2825": Object {
+      "DependsOn": Array [
+        "PollyLambdaToPollyLambdaFunctionServiceRoleDefaultPolicy1C382631",
+        "PollyLambdaToPollyLambdaFunctionServiceRole74A4E40B",
+      ],
+      "Metadata": Object {
+        "cfn_nag": Object {
+          "rules_to_suppress": Array [
+            Object {
+              "id": "W58",
+              "reason": "Lambda functions has the required permission to write CloudWatch Logs. It uses custom policy instead of arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole with tighter permissions.",
+            },
+            Object {
+              "id": "W89",
+              "reason": "This is not a rule for the general case, just for specific use cases/industries",
+            },
+            Object {
+              "id": "W92",
+              "reason": "Impossible for us to define the correct concurrency for clients",
+            },
+            Object {
+              "id": "W92",
+              "reason": "This function does not need to have specified reserved concurrent executions",
+            },
+          ],
+        },
+      },
+      "Properties": Object {
+        "Code": Object {
+          "S3Bucket": Object {
+            "Ref": "AssetParameters1a21ea43914ea1da86c2df4fc8d05aaece63825a01a07c2977ece5a5db037391S3BucketCF831E25",
+          },
+          "S3Key": Object {
+            "Fn::Join": Array [
+              "",
+              Array [
+                Object {
+                  "Fn::Select": Array [
+                    0,
+                    Object {
+                      "Fn::Split": Array [
+                        "||",
+                        Object {
+                          "Ref": "AssetParameters1a21ea43914ea1da86c2df4fc8d05aaece63825a01a07c2977ece5a5db037391S3VersionKey235DFDBA",
+                        },
+                      ],
+                    },
+                  ],
+                },
+                Object {
+                  "Fn::Select": Array [
+                    1,
+                    Object {
+                      "Fn::Split": Array [
+                        "||",
+                        Object {
+                          "Ref": "AssetParameters1a21ea43914ea1da86c2df4fc8d05aaece63825a01a07c2977ece5a5db037391S3VersionKey235DFDBA",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            ],
+          },
+        },
+        "Description": "Serverless-bot-framework Polly lambda",
+        "Environment": Object {
+          "Variables": Object {
+            "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1",
+          },
+        },
+        "FunctionName": Object {
+          "Fn::Join": Array [
+            "",
+            Array [
+              Object {
+                "Ref": "AWS::StackName",
+              },
+              "-PollyLambda",
+            ],
+          ],
+        },
+        "Handler": "index.handler",
+        "MemorySize": 128,
+        "Role": Object {
+          "Fn::GetAtt": Array [
+            "PollyLambdaToPollyLambdaFunctionServiceRole74A4E40B",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs12.x",
+        "Timeout": 300,
+        "TracingConfig": Object {
+          "Mode": "Active",
+        },
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "PollyLambdaToPollyLambdaFunctionServiceRole74A4E40B": Object {
+      "Properties": Object {
+        "AssumeRolePolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": Object {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Policies": Array [
+          Object {
+            "PolicyDocument": Object {
+              "Statement": Array [
+                Object {
+                  "Action": Array [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": Object {
+                    "Fn::Join": Array [
+                      "",
+                      Array [
+                        "arn:",
+                        Object {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":logs:",
+                        Object {
+                          "Ref": "AWS::Region",
+                        },
+                        ":",
+                        Object {
+                          "Ref": "AWS::AccountId",
+                        },
+                        ":log-group:/aws/lambda/*",
+                      ],
+                    ],
+                  },
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "LambdaFunctionServiceRolePolicy",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "PollyLambdaToPollyLambdaFunctionServiceRoleDefaultPolicy1C382631": Object {
+      "Metadata": Object {
+        "cfn_nag": Object {
+          "rules_to_suppress": Array [
+            Object {
+              "id": "W12",
+              "reason": "Lambda needs the following minimum required permissions to send trace data to X-Ray and access ENIs in a VPC.",
+            },
+          ],
+        },
+      },
+      "Properties": Object {
+        "PolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": Array [
+                "xray:PutTraceSegments",
+                "xray:PutTelemetryRecords",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "PollyLambdaToPollyLambdaFunctionServiceRoleDefaultPolicy1C382631",
+        "Roles": Array [
+          Object {
+            "Ref": "PollyLambdaToPollyLambdaFunctionServiceRole74A4E40B",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "PollyLambdaToPollyPollyPolicy68D8DD5C": Object {
+      "Metadata": Object {
+        "cfn_nag": Object {
+          "rules_to_suppress": Array [
+            Object {
+              "id": "W12",
+              "reason": "Polly allows specifying lexicon ARNs only. There is no specific lexicon required for this policy",
+            },
+          ],
+        },
+      },
+      "Properties": Object {
+        "PolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "polly:SynthesizeSpeech",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "PollyLambdaToPollyPollyPolicy68D8DD5C",
+        "Roles": Array [
+          Object {
+            "Ref": "PollyLambdaToPollyLambdaFunctionServiceRole74A4E40B",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+  },
+}
+`;

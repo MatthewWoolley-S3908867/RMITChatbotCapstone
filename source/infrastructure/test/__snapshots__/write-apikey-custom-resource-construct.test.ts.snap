@@ -1,0 +1,281 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`test WriteApiKeyCustomResource construct 1`] = `
+Object {
+  "Conditions": Object {
+    "WeatherAPIChosen": Object {
+      "Fn::Not": Array [
+        Object {
+          "Fn::Equals": Array [
+            "weatherAPIProvider",
+            "Random Weather Generator",
+          ],
+        },
+      ],
+    },
+  },
+  "Parameters": Object {
+    "AssetParameterse44c436f3e5119faa401a6748ea021b13f63a3ad620e42b583c7730af8fff1ccArtifactHash619CDD1D": Object {
+      "Description": "Artifact hash for asset \\"e44c436f3e5119faa401a6748ea021b13f63a3ad620e42b583c7730af8fff1cc\\"",
+      "Type": "String",
+    },
+    "AssetParameterse44c436f3e5119faa401a6748ea021b13f63a3ad620e42b583c7730af8fff1ccS3Bucket09576A85": Object {
+      "Description": "S3 bucket for asset \\"e44c436f3e5119faa401a6748ea021b13f63a3ad620e42b583c7730af8fff1cc\\"",
+      "Type": "String",
+    },
+    "AssetParameterse44c436f3e5119faa401a6748ea021b13f63a3ad620e42b583c7730af8fff1ccS3VersionKey01FBE6A0": Object {
+      "Description": "S3 key for asset version \\"e44c436f3e5119faa401a6748ea021b13f63a3ad620e42b583c7730af8fff1cc\\"",
+      "Type": "String",
+    },
+  },
+  "Resources": Object {
+    "WriteAPIKeyCreateBotConfigE05091F6": Object {
+      "Condition": "WeatherAPIChosen",
+      "DeletionPolicy": "Delete",
+      "Properties": Object {
+        "APIKey": "weatherAPIKey",
+        "SSMKeyNameAPI": Object {
+          "Fn::Join": Array [
+            "",
+            Array [
+              Object {
+                "Ref": "AWS::StackName",
+              },
+              "-weather-api-key",
+            ],
+          ],
+        },
+        "ServiceToken": Object {
+          "Fn::GetAtt": Array [
+            "WriteAPIKeyLambdaFunction401544C1",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::WriteKey",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "WriteAPIKeyLambdaFunction401544C1": Object {
+      "Condition": "WeatherAPIChosen",
+      "DependsOn": Array [
+        "WriteAPIKeyLambdaFunctionServiceRoleDefaultPolicy14FA8064",
+        "WriteAPIKeyLambdaFunctionServiceRole95F10111",
+      ],
+      "Metadata": Object {
+        "cfn_nag": Object {
+          "rules_to_suppress": Array [
+            Object {
+              "id": "W58",
+              "reason": "Lambda functions has the required permission to write CloudWatch Logs. It uses custom policy instead of arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole with tighter permissions.",
+            },
+            Object {
+              "id": "W89",
+              "reason": "This is not a rule for the general case, just for specific use cases/industries",
+            },
+            Object {
+              "id": "W92",
+              "reason": "Impossible for us to define the correct concurrency for clients",
+            },
+            Object {
+              "id": "W92",
+              "reason": "This function does not need to have specified reserved concurrent executions",
+            },
+          ],
+        },
+      },
+      "Properties": Object {
+        "Code": Object {
+          "S3Bucket": Object {
+            "Ref": "AssetParameterse44c436f3e5119faa401a6748ea021b13f63a3ad620e42b583c7730af8fff1ccS3Bucket09576A85",
+          },
+          "S3Key": Object {
+            "Fn::Join": Array [
+              "",
+              Array [
+                Object {
+                  "Fn::Select": Array [
+                    0,
+                    Object {
+                      "Fn::Split": Array [
+                        "||",
+                        Object {
+                          "Ref": "AssetParameterse44c436f3e5119faa401a6748ea021b13f63a3ad620e42b583c7730af8fff1ccS3VersionKey01FBE6A0",
+                        },
+                      ],
+                    },
+                  ],
+                },
+                Object {
+                  "Fn::Select": Array [
+                    1,
+                    Object {
+                      "Fn::Split": Array [
+                        "||",
+                        Object {
+                          "Ref": "AssetParameterse44c436f3e5119faa401a6748ea021b13f63a3ad620e42b583c7730af8fff1ccS3VersionKey01FBE6A0",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            ],
+          },
+        },
+        "Description": "Write APIKey to SSM",
+        "Handler": "index.lambda_handler",
+        "MemorySize": 128,
+        "Role": Object {
+          "Fn::GetAtt": Array [
+            "WriteAPIKeyLambdaFunctionServiceRole95F10111",
+            "Arn",
+          ],
+        },
+        "Runtime": "python3.8",
+        "Timeout": 180,
+        "TracingConfig": Object {
+          "Mode": "Active",
+        },
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "WriteAPIKeyLambdaFunctionServiceRole95F10111": Object {
+      "Properties": Object {
+        "AssumeRolePolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": Object {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Policies": Array [
+          Object {
+            "PolicyDocument": Object {
+              "Statement": Array [
+                Object {
+                  "Action": Array [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": Object {
+                    "Fn::Join": Array [
+                      "",
+                      Array [
+                        "arn:",
+                        Object {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":logs:",
+                        Object {
+                          "Ref": "AWS::Region",
+                        },
+                        ":",
+                        Object {
+                          "Ref": "AWS::AccountId",
+                        },
+                        ":log-group:/aws/lambda/*",
+                      ],
+                    ],
+                  },
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "LambdaFunctionServiceRolePolicy",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "WriteAPIKeyLambdaFunctionServiceRoleDefaultPolicy14FA8064": Object {
+      "Metadata": Object {
+        "cfn_nag": Object {
+          "rules_to_suppress": Array [
+            Object {
+              "id": "W12",
+              "reason": "Lambda needs the following minimum required permissions to send trace data to X-Ray and access ENIs in a VPC.",
+            },
+          ],
+        },
+      },
+      "Properties": Object {
+        "PolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": Array [
+                "xray:PutTraceSegments",
+                "xray:PutTelemetryRecords",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "WriteAPIKeyLambdaFunctionServiceRoleDefaultPolicy14FA8064",
+        "Roles": Array [
+          Object {
+            "Ref": "WriteAPIKeyLambdaFunctionServiceRole95F10111",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "WriteAPIKeySSMUpdate2669619B": Object {
+      "Condition": "WeatherAPIChosen",
+      "Properties": Object {
+        "PolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": Array [
+                "ssm:PutParameter",
+                "ssm:DeleteParameter",
+              ],
+              "Effect": "Allow",
+              "Resource": Object {
+                "Fn::Join": Array [
+                  "",
+                  Array [
+                    "arn:",
+                    Object {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":ssm:",
+                    Object {
+                      "Ref": "AWS::Region",
+                    },
+                    ":",
+                    Object {
+                      "Ref": "AWS::AccountId",
+                    },
+                    ":parameter/",
+                    Object {
+                      "Ref": "AWS::StackName",
+                    },
+                    "-weather-api-key",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "WriteAPIKeySSMUpdate2669619B",
+        "Roles": Array [
+          Object {
+            "Ref": "WriteAPIKeyLambdaFunctionServiceRole95F10111",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+  },
+}
+`;

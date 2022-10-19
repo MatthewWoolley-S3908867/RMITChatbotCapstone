@@ -1,0 +1,30 @@
+**/global-s3-assets
+**/regional-s3-assets
+**/tests-s3-assets
+**/open-source
+**/dist/
+**/.env/
+*.pyc
+**/*.egg-info
+*.bin
+.staging
+.DS_STORE
+**/node_modules
+venv/
+__pycache__/
+.pytest_cache
+geckodriver.log
+.eslintcache
+
+# Coverage directory used by tools like istanbul
+coverage-reports/
+coverage
+*.lcov
+
+# Temporary folders
+tmp/
+temp/
+
+### IDE such as VS Code or PyCharm ###
+.vscode
+.idea
