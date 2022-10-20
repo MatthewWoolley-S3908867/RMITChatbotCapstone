@@ -82,9 +82,10 @@ aws s3 sync ./regional-s3-assets s3://$ARTIFACT_BUCKET-us-east-1/$SOLUTION_NAME/
 - Head to the AWS Lambda service and select Bot-LexLambdaDynamoDBLambdaFunction and Bot-coreLambdaLambdaFunction
 - Scroll to Code source and upload from ZIP. Upload our ZIP file containing our code changes. Do this for both functions.
 
-###. 5. (If required) Import Joe bot into Lex
+###. 5.Import Joe bot into Lex
 
-- If for any reasons there's still issues. Head to lex and import the JSON bot existing at the root of the git repo. Joe
+-  Head to lex and import the JSON bot existing at the root of the git repo name it joe, then make sure to go into allias as connect the lambda to joe in order for it to work
+
 
 ## Known Behavior
 
