@@ -1,4 +1,11 @@
 # RMIT Serverless ChatBot
+Github url: https://github.com/MatthewWoolley-S3908867/RMITChatbotCapstone
+
+deployed at: https://d33hwz5qdc8qs4.cloudfront.net/
+
+username: test
+
+password LKfWO&m0
 
 ## On this Page
 
@@ -12,7 +19,9 @@
 
 ## Deployment
 
-The solution is deployed using a CloudFormation template with a lambda backed custom resource. For details on deploying the solution please see the details on the solution home page: [Serverless Bot Framework](https://aws.amazon.com/solutions/serverless-bot-framework/)
+The solution is deployed using a CloudFormation template with a lambda backed custom resource. For details on deploying the solution please see the details on the solution home page: [Serverless Bot Framework](https://aws.amazon.com/solutions/serverless-bot-framework/) with certain changes done to make the code funciton, check the changes folder for a txt with these edits 
+
+Note: these changes do include python changes that have not been indented, if you need to update the previous framework, make sure to indent them correctly
 
 ## Source Code
 
@@ -28,10 +37,16 @@ Includes source code for three lambda functions, core, lex-bot, webclient-setup,
 **source/services/solution-helper**
 A Python Lambda function used as a CloudFormation custom resource for configuring Amazon S3 bucket notifications and to send anonymous metrics.
 
+## Database
+Check the database.txt file in this repo/folder to learn about the current database set up
+
 ## Deploying our custom build
 
 The solution can be deployed through the CloudFormation template available on the solution home page: [Serverless Bot Framework](https://aws.amazon.com/solutions/implementations/serverless-bot-framework/).
 To make changes to the solution, download or clone this repo, update the source code and then run the deployment/build-s3-dist.sh script to deploy the updated Lambda code to an Amazon S3 bucket in your account.
+
+
+
 
 ### Prerequisites:
 

@@ -1,0 +1,210 @@
+Some Background:
+The Serverless Bot Framework used to be an AWS Solution. The solution assets were pre-built and offered for customers from the solutions public S3 buckets.
+
+The Serverless Bot Framework is now a Guidance. For Guidance, we removed the ability to deploy pre-built assets from the landing page. Customers need to clone the GitHub repository and build the Guidance.
+
+Root cause of your reported issue:
+If you monitor your built stack deployment, you will notice that all lambda functions are successfully created. Which rolls out the need to have a public S3 Bucket in the customer accounts. However, by debugging the Lambda function associated with the custom resource, that caused the failure, you will see the reason for that at [1].
+---
+webclient_pack = urlopen(resource_properties[\"SampleWebclientPackage\"])
+---
+
+Using the urlopen fails in the case of a private S3 Bucket. It was succeeding before because the assets are pre-built and offered in the AWS Solutions public buckets. This is a bug.
+
+Fixing the issue:
+I have quickly tried these code changes, and was able to successfully deploy the solution.
+1. serverless-bot-framework/source/infrastructure/lib/serverless-bot-framework-stack.ts [2]
+
+Replace the new WebClientCustomResource [3] with the following.
+==========
+/** Create CustomResource */
+new WebClientCustomResource(this, 'WebClientCustomResource', {
+botApiUrl: `https://${botApi.restApiId}.execute-api.${Aws.REGION}.amazonaws.com/${botApi.deploymentStage.stageName}/`,
+botApiStageName: botApi.deploymentStage.stageName,
+botApiId: botApi.restApiId,
+botName: botName.valueAsString,
+botGender: botGender.valueAsString,
+botLanguage: botLanguage.valueAsString,
+cognitoIdentityPool: cognitoApiCorePollyLambdas.botCognitoIdentityPool.ref,
+cognitoUserPoolId: cognitoApiCorePollyLambdas.botCognitoUserPool.userPoolId,
+cognitoUserPoolClientId: cognitoApiCorePollyLambdas.botCognitoUserPoolClient.userPoolClientId,
+sampleWebClientBucketName: cloudfrontStaticWebsite.bucketName,
+// sampleWebclientPackage: webClientPackageUrl,
+/** start of added code */
+sampleWebClientZipFileBucket: webClientPackageLocation.S3Bucket,
+sampleWebClientZipFile: webClientPackageLocation.S3Key,
+/** end of added code */
+});
+==========
+
+2. serverless-bot-framework/source/infrastructure/lib/web-client-custom-resource-construct.ts [4]
+
+- Replace export interface WebClientCustomResourceProps [5] with the following:
+==========
+export interface WebClientCustomResourceProps {
+readonly botApiUrl: string;
+readonly botApiStageName: string;
+readonly botApiId: string;
+readonly botName: string;
+readonly botLanguage: string;
+readonly botGender: string;
+readonly cognitoIdentityPool: string;
+readonly cognitoUserPoolId: string;
+readonly cognitoUserPoolClientId: string;
+readonly sampleWebClientBucketName: string;
+// readonly sampleWebclientPackage: string;
+/** start of added code */
+readonly sampleWebClientZipFileBucket: string;
+readonly sampleWebClientZipFile: string;
+/** end of added code */
+}
+==========
+
+- Replace const botCustomResourcePolicy [6] with the following:
+==========
+export interface WebClientCustomResourceProps {
+readonly botApiUrl: string;
+readonly botApiStageName: string;
+readonly botApiId: string;
+readonly botName: string;
+readonly botLanguage: string;
+readonly botGender: string;
+readonly cognitoIdentityPool: string;
+readonly cognitoUserPoolId: string;
+readonly cognitoUserPoolClientId: string;
+readonly sampleWebClientBucketName: string;
+// readonly sampleWebclientPackage: string;
+/** start of added code */
+readonly sampleWebClientZipFileBucket: string;
+readonly sampleWebClientZipFile: string;
+/** end of added code */
+}
+==========
+
+- Replace const botCustomResourcePolicy [7] with the following:
+==========
+const botCustomResourcePolicy = new Policy(this, 'WebClientCustomResourcePolicy', {
+policyName: 'WebClientCustomResource',
+statements: [
+/** WebClient Bucket permissions */
+new PolicyStatement({
+effect: Effect.ALLOW,
+actions: ['s3:ListBucket', 's3:GetBucketLocation'],
+resources: [`arn:${Aws.PARTITION}:s3:::${props.sampleWebClientBucketName}`],
+}),
+new PolicyStatement({
+effect: Effect.ALLOW,
+actions: ['s3:GetObject', 's3:PutObject', 's3:DeleteObject'],
+resources: [`arn:${Aws.PARTITION}:s3:::${props.sampleWebClientBucketName}/*`],
+}),
+/** start of added code */
+new PolicyStatement({
+effect: Effect.ALLOW,
+actions: ['s3:GetObject'],
+resources: [
+`arn:${Aws.PARTITION}:s3:::${props.sampleWebClientZipFileBucket}/${props.sampleWebClientZipFile}`,
+],
+}),
+/** end of added code */
+/** BotApi permissions */
+new PolicyStatement({
+effect: Effect.ALLOW,
+actions: ['apigateway:POST'],
+resources: [`arn:${Aws.PARTITION}:apigateway:${Aws.REGION}::/restapis/${props.botApiId}/deployments`],
+}),
+],
+});
+==========
+
+- Replace new CustomResource [8] with the following:
+==========
+new CustomResource(this, 'CreateWebClientConfig', {
+resourceType: 'Custom::CreateWebClientConfig',
+serviceToken: customResourceLambda.functionArn,
+properties: {
+AwsRegion: Aws.REGION,
+ApiUri: props.botApiUrl,
+BotName: props.botName,
+BotLanguage: props.botLanguage,
+BotGender: props.botGender,
+SampleWebClientBucket: props.sampleWebClientBucketName,
+// SampleWebclientPackage: props.sampleWebclientPackage,
+/** start of added code */
+SampleWebclientZipFileBucket: props.sampleWebClientZipFileBucket,
+SampleWebClientZipFile: props.sampleWebClientZipFile,
+/** end of added code */
+CognitoIdentityPool: props.cognitoIdentityPool,
+CognitoUserPoolId: props.cognitoUserPoolId,
+CognitoUserPoolClientId: props.cognitoUserPoolClientId,
+},
+});
+==========
+
+3. serverless-bot-framework/source/services/webclient-setup/lambda_function.py [9]
+
+- Add s3_resource = boto3.resource(\"s3\") after s3_client = boto3.client(\"s3\", config=CLIENT_CONFIG) [10]
+- Replace create_resource function [11] with the following:
+==========
+@helper.create
+def create_resource(event, _):
+resource_properties = event[\"ResourceProperties\"]
+logger.info(\"Process Webclient Sample Package\")
+logger.info(resource_properties)
+## start of added code ##
+zip_obj = s3_resource.Object(
+bucket_name=resource_properties[\"SampleWebclientZipFileBucket\"],
+key=resource_properties[\"SampleWebClientZipFile\"],
+)
+buffer = BytesIO(zip_obj.get()[\"Body\"].read())
+zipfile = ZipFile(buffer)
+## end of added code ##
+# webclient_pack = urlopen(resource_properties[\"SampleWebclientPackage\"])
+# zipfile = ZipFile(BytesIO(webclient_pack.read()))
+
+for file_name in zipfile.namelist():
+content = zipfile.open(file_name).read()
+
+if file_name.split(\".\")[-1] in [\"js\", \"json\", \"html\"]:
+content = replace_config_anchors(content.decode(\"utf-8\"), resource_properties)
+
+conten_type = mimetypes.guess_type(file_name)[0]
+if conten_type != None:
+s3_client.put_object(
+Body=content,
+Bucket=resource_properties[\"SampleWebClientBucket\"],
+Key=file_name,
+ContentType=conten_type,
+)
+else:
+s3_client.put_object(Body=content, Bucket=resource_properties[\"SampleWebClientBucket\"], Key=file_name)
+==========
+
+Note: You can remove the commented code. These were just to let you know what changes were made.
+-----
+
+I hope this helps. Please feel free to let me know if you have any further queries/concerns.
+
+Thank you and have a great time ahead.
+
+References:
+[1] https://github.com/aws-solutions/serverless-bot-framework/blob/main/source/services/webclient-setup/lambda_function.py#L101
+
+[2] https://github.com/aws-solutions/serverless-bot-framework/blob/bc0fb28535818ab03b7eda86563bd226ce074361/source/infrastructure/lib/serverless-bot-framework-stack.ts
+
+[3] https://github.com/aws-solutions/serverless-bot-framework/blob/bc0fb28535818ab03b7eda86563bd226ce074361/source/infrastructure/lib/serverless-bot-framework-stack.ts#L283
+
+[4] https://github.com/aws-solutions/serverless-bot-framework/blob/bc0fb28535818ab03b7eda86563bd226ce074361/source/infrastructure/lib/web-client-custom-resource-construct.ts
+
+[5] https://github.com/aws-solutions/serverless-bot-framework/blob/bc0fb28535818ab03b7eda86563bd226ce074361/source/infrastructure/lib/web-client-custom-resource-construct.ts#L21
+
+[6] https://github.com/aws-solutions/serverless-bot-framework/blob/bc0fb28535818ab03b7eda86563bd226ce074361/source/infrastructure/lib/web-client-custom-resource-construct.ts#L40
+
+[7] https://github.com/aws-solutions/serverless-bot-framework/blob/bc0fb28535818ab03b7eda86563bd226ce074361/source/infrastructure/lib/web-client-custom-resource-construct.ts#L40
+
+[8] https://github.com/aws-solutions/serverless-bot-framework/blob/bc0fb28535818ab03b7eda86563bd226ce074361/source/infrastructure/lib/web-client-custom-resource-construct.ts#L81
+
+[9] https://github.com/aws-solutions/serverless-bot-framework/blob/main/source/services/webclient-setup/lambda_function.py
+
+[10] https://github.com/aws-solutions/serverless-bot-framework/blob/main/source/services/webclient-setup/lambda_function.py#L32
+
+[11] https://github.com/aws-solutions/serverless-bot-framework/blob/main/source/services/webclient-setup/lambda_function.py#L96

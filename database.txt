@@ -1,0 +1,9 @@
+the current database is deployed on RACE DynamoDB and consits of 4 tables, assingments, courses, course work queries and Users.
+
+Assingments stors assignments with the following values, Course id, name, due date, number, contact info, description, file type, points, and subbmiting
+
+courses stores courses with a name and course ID
+
+Course work queries uses course id, the question and the answer
+
+and users simply has email and the users firstname
